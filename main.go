@@ -26,9 +26,10 @@ func displayVersionInfo() {
 }
 
 func main() {
-	config := config.Config{}
+	var config = config.Config{}
 	var configFile string
-	flag.StringVar(&configFile, "f", "", "config file")
+
+	flag.StringVar(&configFile, "f", "", "config file (support json/yaml)")
 	flag.StringVar(&config.DeviceName, "dn", "", "device name")
 	flag.StringVar(&config.CIDR, "c", "172.16.0.10/24", "tun interface cidr")
 	flag.StringVar(&config.CIDRv6, "c6", "fced:9999::9999/64", "tun interface ipv6 cidr")
@@ -55,7 +56,7 @@ func main() {
 	flag.Parse()
 	displayVersionInfo()
 	if configFile != "" {
-		err := config.LoadConfig(configFile, &config)
+		err := config.LoadConfig(configFile)
 		if err != nil {
 			log.Fatalf("Failed to load config from file: %s", err)
 		}

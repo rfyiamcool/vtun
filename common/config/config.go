@@ -2,7 +2,10 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 // Config The config struct
@@ -35,16 +38,21 @@ type Config struct {
 	Host                      string `json:"host"`
 }
 
-func (c Config) LoadConfig(configFile string, config *Config) (err error) {
-	file, err := os.Open(configFile)
+func (c *Config) LoadConfig(configFile string) (err error) {
+	data, err := os.ReadFile(configFile)
 	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(data, c)
+	if err == nil {
 		return
 	}
-	defer file.Close()
-	decoder := json.NewDecoder(file)
-	err = decoder.Decode(config)
-	if err != nil {
+
+	err = yaml.Unmarshal(data, c)
+	if err == nil {
 		return
 	}
-	return
+
+	return errors.New("the file format is json or yaml")
 }

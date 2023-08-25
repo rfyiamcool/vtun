@@ -39,7 +39,7 @@ Usage of vtun:
   -dn string
       device name
   -f string
-      config file
+      config file (support json/yaml)
   -g  client global mode
   -host string
       http host

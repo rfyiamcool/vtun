@@ -30,13 +30,7 @@ var cancel context.CancelFunc
 func StartClientForApi(config config.Config, outputStream <-chan []byte, inputStream chan<- []byte, writeCallback, readCallback func(int), _ctx context.Context) {
 	go Tun2Conn(config, outputStream, _ctx, readCallback)
 	for xtun.ContextOpened(_ctx) {
-		var (
-			conn *net.TCPConn
-			err  error
-		)
-
-		tcpAddr, _ := net.ResolveTCPAddr("tcp", config.ServerAddr)
-		conn, err = net.DialTCP("tcp", nil, tcpAddr)
+		conn, err := net.Dial("tcp", config.ServerAddr)
 		if err != nil {
 			time.Sleep(3 * time.Second)
 			netutil.PrintErr(err, config.Verbose)
@@ -48,8 +42,12 @@ func StartClientForApi(config config.Config, outputStream <-chan []byte, inputSt
 			netutil.PrintErr(err, config.Verbose)
 			continue
 		}
-		conn.SetKeepAlive(true)
-		conn.SetKeepAlivePeriod(10 * time.Second)
+
+		tcpConn, ok := conn.(*net.TCPConn)
+		if ok {
+			tcpConn.SetKeepAlive(true)
+			tcpConn.SetKeepAlivePeriod(10 * time.Second)
+		}
 
 		cache.GetCache().Set(ConnTag, conn, 24*time.Hour)
 		Conn2Tun(config, conn, inputStream, _ctx, writeCallback)
@@ -73,7 +71,7 @@ func StartClient(iFace *water.Interface, config config.Config) {
 	)
 }
 
-func Handshake(config config.Config, conn *net.TCPConn) error {
+func Handshake(config config.Config, conn net.Conn) error {
 	var obj *xproto.ClientHandshakePacket
 	var err error
 	if v, ok := cache.GetCache().Get(HandshakeTag); ok {
